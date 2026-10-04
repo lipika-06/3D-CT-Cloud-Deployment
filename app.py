@@ -1,22 +1,13 @@
 from flask import Flask, render_template, request
 import numpy as np
-import tensorflow as tf
 import os
 
 app = Flask(__name__)
 
-# Load trained model
-model = tf.keras.models.load_model(
-    "3D_CT_Classification_Model.keras"
-)
-
 
 @app.route("/")
 def home():
-
-    return render_template(
-        "index.html"
-    )
+    return render_template("index.html")
 
 
 @app.route("/predict", methods=["POST"])
@@ -25,29 +16,21 @@ def predict():
     file = request.files.get("ct_file")
 
     if file is None or file.filename == "":
-
         return render_template(
             "index.html",
             result="Please select a file."
         )
 
-    # Create the same type of 3D input
-    # used during training
-
+    # Create a small synthetic 3D CT volume
     size = 32
 
     image = np.random.normal(
-        0,
-        0.1,
-        (size, size, size)
+        0, 0.1, (size, size, size)
     )
 
-    # Create lung-like region
-
+    # Create a lung-like region
     for z in range(size):
-
         for x in range(size):
-
             for y in range(size):
 
                 cx = size // 2
@@ -60,48 +43,33 @@ def predict():
                 )
 
                 if distance < 1:
-
                     image[z, x, y] += 0.5
 
-    # Add abnormal region
-
+    # Simple abnormal region
     image[12:20, 12:18, 12:18] += 1
 
-    # Prepare input
+    # Simple segmentation
+    segmented = image > 0.3
 
-    image = image.reshape(
-        1,
-        32,
-        32,
-        32,
-        1
-    )
+    # Calculate abnormal percentage
+    abnormal_pixels = np.sum(segmented)
+    total_pixels = segmented.size
 
-    # Predict
+    abnormal_percentage = (
+        abnormal_pixels / total_pixels
+    ) * 100
 
-    prediction = model.predict(
-        image,
-        verbose=0
-    )
-
-    probability = float(
-        prediction[0][0]
-    )
-
-    if probability > 0.5:
-
+    # Simple classification
+    if abnormal_percentage > 5:
         result = "ABNORMAL CT"
-
     else:
-
         result = "NORMAL CT"
 
     return render_template(
         "index.html",
         result=result,
         probability=round(
-            probability * 100,
-            2
+            abnormal_percentage, 2
         )
     )
 
@@ -109,10 +77,7 @@ def predict():
 if __name__ == "__main__":
 
     port = int(
-        os.environ.get(
-            "PORT",
-            10000
-        )
+        os.environ.get("PORT", 10000)
     )
 
     app.run(
