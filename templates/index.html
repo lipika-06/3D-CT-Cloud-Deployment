@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D CT Cloud Analysis</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>3D CT Classification</h1>
+
+    <h3>Cloud-Based CT Image Analysis</h3>
+
+    <p>Upload a CT file for analysis</p>
+
+    <form action="/predict"
+          method="POST"
+          enctype="multipart/form-data">
+
+        <input type="file" name="ct_file" required>
+
+        <br><br>
+
+        <button type="submit">Analyze CT</button>
+
+    </form>
+
+    {% if result %}
+
+    <div class="result">
+
+        <h2>Prediction Result</h2>
+
+        <h3>{{ result }}</h3>
+
+        {% if probability %}
+        <p>Prediction Probability: {{ probability }}%</p>
+        {% endif %}
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>
